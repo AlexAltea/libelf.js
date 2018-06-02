@@ -3,3 +3,21 @@ node_modules/
 
 # Emscripten
 *.out.js
+*.out.wasm
+
+# LibElf
+libelf/**/*.a
+libelf/**/*.o
+libelf/Makefile
+libelf/config.cache
+libelf/config.h
+libelf/config.log
+libelf/config.status
+libelf/lib/Makefile
+libelf/lib/stamp-h
+libelf/lib/sys_elf.h
+libelf/lib/version.c.bak
+libelf/libelf.pc
+libelf/po/Makefile
+libelf/po/de.mo
+libelf/stamp-h
