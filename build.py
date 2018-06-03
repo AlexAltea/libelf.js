@@ -7,71 +7,6 @@ import os
 import sys
 import shutil
 
-EXPORTED_FUNCTIONS = [
-    '_elf_begin',
-    '_elf_clone',
-    '_elf_memory',
-    '_elf_next',
-    '_elf_end',
-    '_elf_update',
-    '_elf_kind',
-    '_elf_getbase',
-    '_elf_getident',
-    '_elf32_getehdr',
-    '_elf64_getehdr',
-    '_elf32_newehdr',
-    '_elf64_newehdr',
-    '_elf_getphdrnum',
-    '_elf32_getphdr',
-    '_elf64_getphdr',
-    '_elf32_newphdr',
-    '_elf64_newphdr',
-    '_elf_getscn',
-    '_elf32_offscn',
-    '_elf64_offscn',
-    '_elf_ndxscn',
-    '_elf_nextscn',
-    '_elf_newscn',
-    '_elf_scnshndx',
-    '_elf_getshdrnum',
-    '_elf_getshnum',
-    '_elf_getshdrstrndx',
-    '_elf_getshstrndx',
-    '_elf32_getshdr',
-    '_elf64_getshdr',
-    '_elf_flagelf',
-    '_elf_flagehdr',
-    '_elf_flagphdr',
-    '_elf_flagscn',
-    '_elf_flagdata',
-    '_elf_flagshdr',
-    '_elf_getdata',
-    '_elf_rawdata',
-    '_elf_newdata',
-    '_elf_getdata_rawchunk',
-    '_elf_strptr',
-    '_elf_getarhdr',
-    '_elf_getaroff',
-    '_elf_rand',
-    '_elf_getarsym',
-    '_elf_cntl',
-    '_elf_rawfile',
-    '_elf32_fsize',
-    '_elf64_fsize',
-    '_elf32_xlatetom',
-    '_elf64_xlatetom',
-    '_elf32_xlatetof',
-    '_elf64_xlatetof',
-    '_elf_errno',
-    '_elf_errmsg',
-    '_elf_version',
-    '_elf_fill',
-    '_elf_hash',
-    '_elf_gnu_hash',
-    '_elf32_checksum',
-    '_elf64_checksum',
-]
-
 # Directories
 LIBELF_DIR = os.path.abspath("libelf")
 
@@ -105,6 +40,14 @@ def compileLibelf():
     if os.name == 'posix':
         os.system('make')
     os.chdir('..')
+
+    # Get exported functions
+    with open(os.path.join(LIBELF_DIR, "lib/libelf.def"), 'r') as f:
+        key = 'EXPORTS'
+        contents = f.read()
+        exports = contents[contents.index(key) + len(key):]
+        exports = exports.strip().split('\n\t')
+        exports = map(lambda x: '_' + x, exports)
 
     # Compile static library to JavaScript
     cmd = os.path.expandvars('$EMSCRIPTEN/emcc')
