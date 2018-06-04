@@ -46,16 +46,22 @@ def compileLibelf():
         key = 'EXPORTS'
         contents = f.read()
         exports = contents[contents.index(key) + len(key):]
+        exports = exports.replace('\r\n','\n')
         exports = exports.strip().split('\n\t')
         exports = map(lambda x: '_' + x, exports)
+
+    # Get exported runtime methods
+    methods = ['ccall', 'writeArrayToMemory']
 
     # Compile static library to JavaScript
     cmd = os.path.expandvars('$EMSCRIPTEN/emcc')
     cmd += ' -Os --memory-init-file 0'
     cmd += ' libelf/lib/libelf.a'
-    cmd += ' -s EXPORTED_FUNCTIONS=\"[\''+ '\', \''.join(EXPORTED_FUNCTIONS) +'\']\"'
+    cmd += ' -s EXPORT_NAME="\'MLibelf\'"'
+    cmd += ' -s EXPORTED_FUNCTIONS=\"[\''+ '\', \''.join(exports) +'\']\"'
+    cmd += ' -s EXTRA_EXPORTED_RUNTIME_METHODS=\"[\''+ '\', \''.join(methods) +'\']\"'
     cmd += ' -s MODULARIZE=1'
-    cmd += ' -s EXPORT_NAME="\'Mlibelf\'"'
+    cmd += ' -s WASM=0'
     cmd += ' -o src/libelf.out.js'
     os.system(cmd)
 
