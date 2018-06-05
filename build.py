@@ -30,9 +30,10 @@ def compileLibelf():
 
     # Configuring libelf
     os.chdir(LIBELF_DIR)
-    os.system('export libelf_cv_int32=int')
-    os.system('export libelf_cv_int16=short')
-    os.system('emconfigure ./configure')
+    os.system('export "libelf_cv_int64=long long"')
+    os.system('export "libelf_cv_int32=int"')
+    os.system('export "libelf_cv_int16=short"')
+    os.system('emconfigure ./configure --enable-elf64')
 
     # MinGW (Windows) or Make (Linux/Unix)
     if os.name == 'nt':
@@ -51,7 +52,7 @@ def compileLibelf():
         exports = map(lambda x: '_' + x, exports)
 
     # Get exported runtime methods
-    methods = ['ccall', 'writeArrayToMemory']
+    methods = ['ccall', 'writeArrayToMemory', 'getValue']
 
     # Compile static library to JavaScript
     cmd = os.path.expandvars('$EMSCRIPTEN/emcc')
