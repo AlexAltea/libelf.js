@@ -15,7 +15,16 @@ bower install libelf
 
 ## Usage                                                      
 ```javascript
-...
+// var buffer = new Uint8Array([0x7F, 0x45, 0x4C, 0x46, ...]);
+var elf = new Elf(buffer);
+if (elf.kind() != "elf") {
+    throw "Not an ELF file";
+}
+
+var ehdr = elf.getehdr();
+for (var i = 0; i < ehdr.phnum; i++) {
+    var phdr = elf.getphdr(i);
+}
 ```
 
 ## Building

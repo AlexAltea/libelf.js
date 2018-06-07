@@ -88,6 +88,23 @@ var Elf = function (buffer) {
         return value;
     }
 
+    this.getdyn = function (index) {
+        var dyn = {};
+        var dyn_size = 0x10;
+        var dyn_addr = MLibelf._malloc(dyn_size);
+        var ret = MLibelf.ccall('gelf_getdyn', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, index, 0]);
+        if (ret != dyn_addr) {
+            var error = 'Function gelf_getdyn failed';
+            throw error;
+        }
+        this.__stream_set(dyn_addr);
+        dyn.d_tag = this.__stream_read_i64();
+        dyn.d_val = this.__stream_read_i64();
+        MLibelf._free(dyn_addr);
+        return dyn;
+    }
+
     this.getehdr = function () {
         var ehdr = {};
         var ehdr_size = 0x40;
@@ -98,7 +115,6 @@ var Elf = function (buffer) {
             var error = 'Function gelf_getehdr failed';
             throw error;
         }
-
         this.__stream_set(ehdr_addr);
         ehdr.e_type       = this.__stream_read(EI_NIDENT);
         ehdr.e_type       = this.__stream_read_i16();
@@ -137,7 +153,6 @@ var Elf = function (buffer) {
             var error = 'Function gelf_getphdr failed';
             throw error;
         }
-
         this.__stream_set(phdr_addr);
         phdr.p_type    = this.__stream_read_i32();
         phdr.p_flags   = this.__stream_read_i32();
@@ -151,6 +166,57 @@ var Elf = function (buffer) {
         return phdr;
     }
 
+    this.getphdrnum = function () {
+        var phdrnum = 0;
+        var phdrnum_size = 4;
+        var phdrnum_addr = MLibelf._malloc(phdrnum_size);
+        var ret = MLibelf.ccall('elf_getphdrnum', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, phdrnum_addr]);
+        if (ret != 0) {
+            MLibelf._free(phdrnum_addr);
+            var error = 'Function elf_getphdrnum failed';
+            throw error;
+        }
+        phdrnum = __read_i32(phdrnum_addr);
+        MLibelf._free(phdrnum_addr);
+        return phdrnum;
+    }
+
+    this.getrel = function (index) {
+        var rel = {};
+        var rel_size = 0x10;
+        var rel_addr = MLibelf._malloc(rel_size);
+        var ret = MLibelf.ccall('gelf_getrel', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, index, rel_addr]);
+        if (ret != rel_addr) {
+            var error = 'Function gelf_getdyn failed';
+            throw error;
+        }
+        this.__stream_set(rel_addr);
+        rel.r_offset  = this.__stream_read_i64();
+        rel.r_info    = this.__stream_read_i64();
+        MLibelf._free(rel_addr);
+        return rel;
+    }
+
+    this.getrela = function (index) {
+        var rela = {};
+        var rela_size = 0x18;
+        var rela_addr = MLibelf._malloc(rela_size);
+        var ret = MLibelf.ccall('gelf_getrela', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, index, rela_addr]);
+        if (ret != rela_addr) {
+            var error = 'Function gelf_getdyn failed';
+            throw error;
+        }
+        this.__stream_set(rela_addr);
+        rela.r_offset  = this.__stream_read_i64();
+        rela.r_info    = this.__stream_read_i64();
+        rela.r_addend  = this.__stream_read_i64();
+        MLibelf._free(rela_addr);
+        return rela;
+    }
+
     this.getshdr = function () {
         var shdr = {};
         var shdr_size = 0x40;
@@ -161,7 +227,6 @@ var Elf = function (buffer) {
             var error = 'Function gelf_getshdr failed';
             throw error;
         }
-
         this.__stream_set(shdr_addr);
         shdr.sh_name       = this.__stream_read_i32();
         shdr.sh_type       = this.__stream_read_i32();
@@ -175,6 +240,43 @@ var Elf = function (buffer) {
         shdr.sh_entsize    = this.__stream_read_i64();
         MLibelf._free(shdr_addr);
         return phdr;
+    }
+
+    this.getshdrnum = function () {
+        var shdrnum = 0;
+        var shdrnum_size = 4;
+        var shdrnum_addr = MLibelf._malloc(shdrnum_size);
+        var ret = MLibelf.ccall('elf_getshdrnum', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, shdrnum_addr]);
+        if (ret != 0) {
+            MLibelf._free(shdrnum_addr);
+            var error = 'Function elf_getshdrnum failed';
+            throw error;
+        }
+        shdrnum = __read_i32(shdrnum_addr);
+        MLibelf._free(shdrnum_addr);
+        return shdrnum;
+    }
+
+    this.getsym = function (index) {
+        var sym = {};
+        var sym_size = 0x18;
+        var sym_addr = MLibelf._malloc(sym_size);
+        var ret = MLibelf.ccall('gelf_getsym', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, index, sym_addr]);
+        if (ret != sym_addr) {
+            var error = 'Function gelf_getsym failed';
+            throw error;
+        }
+        this.__stream_set(sym_addr);
+        sym.st_name  = this.__stream_read_i32();
+        sym.st_info  = this.__stream_read_i8();
+        sym.st_other = this.__stream_read_i8();
+        sym.st_shndx = this.__stream_read_i16();
+        sym.st_value = this.__stream_read_i64();
+        sym.st_size  = this.__stream_read_i64();
+        MLibelf._free(sym_addr);
+        return sym;
     }
 
     this.end = function () {

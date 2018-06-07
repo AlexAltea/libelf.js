@@ -82,7 +82,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <h2>Information</h2>
-                    <p><b>Libelf.js</b> is a port of the <a href="http://www.mr511.de/software/english.html">libelf</a> library for JavaScript, done with <a href="https://github.com/kripken/emscripten">Emscripten</a>. It's released as a 300 KB JavaScript file. Follow the <a href="https://github.com/AlexAltea/libelf.js/blob/master/README.md">Readme</a> to build Libelf.js manually.</p>
+                    <p><b>Libelf.js</b> is a port of the <a href="http://www.mr511.de/software/english.html">libelf</a> library for JavaScript, done with <a href="https://github.com/kripken/emscripten">Emscripten</a>. It's released as a 500 KB JavaScript file. Follow the <a href="https://github.com/AlexAltea/libelf.js/blob/master/README.md">Readme</a> to build Libelf.js manually.</p>
                     <p>Libelf is a lightweight library originally developed by <a href="http://www.mr511.de/" target="_blank">http://www.mr511.de/</a> and released under LGPLv2.</p>
 
                     <h2>Installation</h2>
@@ -94,8 +94,16 @@
                 <div class="col-md-6">
                     <h2>Tutorial</h2>
                     <p>
-<pre><code class="javascript">...
-</code></pre>
+<pre><code class="javascript">// var buffer = new Uint8Array([0x7F, 0x45, 0x4C, 0x46, ...]);
+var elf = new Elf(buffer);
+if (elf.kind() != "elf") {
+    throw "Not an ELF file";
+}
+
+var ehdr = elf.getehdr();
+for (var i = 0; i &lt; ehdr.phnum; i++) {
+    var phdr = elf.getphdr(i);
+}</code></pre>
                     </p>
                 </div>
             </div>

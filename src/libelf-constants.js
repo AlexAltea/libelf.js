@@ -45,7 +45,7 @@ ELF_T_NUM     = 17;
 
 /* ELF constants */
 
-EI_NIDENT	  = 16;
+EI_NIDENT      = 16;
 
 // e_type
 ET_NONE       = 0;
@@ -160,28 +160,98 @@ EV_NONE          = 0;
 EV_CURRENT       = 1;
 EV_NUM           = 2;
 
+// p_type
+PT_NULL        = 0;
+PT_LOAD        = 1;
+PT_DYNAMIC     = 2;
+PT_INTERP      = 3;
+PT_NOTE        = 4;
+PT_SHLIB       = 5;
+PT_PHDR        = 6;
+PT_TLS         = 7;
+PT_NUM         = 8;
+PT_LOOS        = 0x60000000;
+PT_HIOS        = 0x6fffffff;
+PT_LOPROC      = 0x70000000;
+PT_HIPROC      = 0x7fffffff;
+
+// p_flags
+PF_X           = 0x1;
+PF_W           = 0x2;
+PF_R           = 0x4;
+PF_MASKOS      = 0x0ff00000;
+PF_MASKPROC    = 0xf0000000;
+
 // sh_type
-SHT_NULL           = 0;
-SHT_PROGBITS       = 1;
-SHT_SYMTAB         = 2;
-SHT_STRTAB         = 3;
-SHT_RELA           = 4;
-SHT_HASH           = 5;
-SHT_DYNAMIC        = 6;
-SHT_NOTE           = 7;
-SHT_NOBITS         = 8;
-SHT_REL            = 9;
-SHT_SHLIB          = 10;
-SHT_DYNSYM         = 11;
-SHT_INIT_ARRAY     = 14;
-SHT_FINI_ARRAY     = 15;
-SHT_PREINIT_ARRAY  = 16;
-SHT_GROUP          = 17;
-SHT_SYMTAB_SHNDX   = 18;
-SHT_NUM            = 19;
-SHT_LOOS           = 0x60000000;
-SHT_HIOS           = 0x6fffffff;
-SHT_LOPROC         = 0x70000000;
-SHT_HIPROC         = 0x7fffffff;
-SHT_LOUSER         = 0x80000000;
-SHT_HIUSER         = 0xffffffff;
+SHT_NULL            = 0;
+SHT_PROGBITS        = 1;
+SHT_SYMTAB          = 2;
+SHT_STRTAB          = 3;
+SHT_RELA            = 4;
+SHT_HASH            = 5;
+SHT_DYNAMIC         = 6;
+SHT_NOTE            = 7;
+SHT_NOBITS          = 8;
+SHT_REL             = 9;
+SHT_SHLIB           = 10;
+SHT_DYNSYM          = 11;
+SHT_INIT_ARRAY      = 14;
+SHT_FINI_ARRAY      = 15;
+SHT_PREINIT_ARRAY   = 16;
+SHT_GROUP           = 17;
+SHT_SYMTAB_SHNDX    = 18;
+SHT_NUM             = 19;
+SHT_LOOS            = 0x60000000;
+SHT_HIOS            = 0x6fffffff;
+SHT_LOPROC          = 0x70000000;
+SHT_HIPROC          = 0x7fffffff;
+SHT_LOUSER          = 0x80000000;
+SHT_HIUSER          = 0xffffffff;
+
+// Dynamic array tags
+DT_NULL             = 0;
+DT_NEEDED           = 1;
+DT_PLTRELSZ         = 2;
+DT_PLTGOT           = 3;
+DT_HASH             = 4;
+DT_STRTAB           = 5;
+DT_SYMTAB           = 6;
+DT_RELA             = 7;
+DT_RELASZ           = 8;
+DT_RELAENT          = 9;
+DT_STRSZ            = 10;
+DT_SYMENT           = 11;
+DT_INIT             = 12;
+DT_FINI             = 13;
+DT_SONAME           = 14;
+DT_RPATH            = 15;
+DT_SYMBOLIC         = 16;
+DT_REL              = 17;
+DT_RELSZ            = 18;
+DT_RELENT           = 19;
+DT_PLTREL           = 20;
+DT_DEBUG            = 21;
+DT_TEXTREL          = 22;
+DT_JMPREL           = 23;
+DT_BIND_NOW         = 24;
+DT_INIT_ARRAY       = 25;
+DT_FINI_ARRAY       = 26;
+DT_INIT_ARRAYSZ     = 27;
+DT_FINI_ARRAYSZ     = 28;
+DT_RUNPATH          = 29;
+DT_FLAGS            = 30;
+DT_ENCODING         = 32;
+DT_PREINIT_ARRAY    = 32;
+DT_PREINIT_ARRAYSZ  = 33;
+DT_NUM              = 34
+DT_LOOS             = 0x6000000D;
+DT_HIOS             = 0x6ffff000;
+DT_LOPROC           = 0x70000000;
+DT_HIPROC           = 0x7fffffff;
+
+// dt_flags
+DF_ORIGIN           = 0x1;
+DF_SYMBOLIC         = 0x2;
+DF_TEXTREL          = 0x4;
+DF_BIND_NOW         = 0x8;
+DF_STATIC_TLS       = 0x10;
