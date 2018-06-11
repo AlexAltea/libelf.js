@@ -6,6 +6,11 @@
 // Emscripten demodularize
 var MLibelf = new MLibelf();
 
+// Number conversion modes
+ELF_INT_NUMBER  = 1
+ELF_INT_STRING  = 2
+ELF_INT_OBJECT  = 3
+
 var Elf = function (buffer) {
     // Constructor
     var ret = MLibelf.ccall('elf_version', 'number', ['number'], [EV_CURRENT]);
@@ -24,11 +29,50 @@ var Elf = function (buffer) {
         ['pointer', 'number'], [this.elf_addr, this.elf_size]);
 
     // Helpers
-    this.__read_i8  = function (addr) { return MLibelf.getValue(addr, 'i8' ); }
-    this.__read_i16 = function (addr) { return MLibelf.getValue(addr, 'i16'); }
-    this.__read_i32 = function (addr) { return MLibelf.getValue(addr, 'i32'); }
-    this.__read_i64 = function (addr) { return MLibelf.getValue(addr, 'i64'); }
+    this.__integer = function (value, width) {
+        if (typeof value === "number") {
+            value = [value];
+        }
+        switch (this.get_integer_type()) {
+        case ELF_INT_NUMBER:
+            return value[0];
+        case ELF_INT_STRING:
+            console.log(width);
+            return value
+                .map(x => x.toString(16).toUpperCase())
+                .map(x => '0'.repeat(width/4 - x.length) + x)
+                .reverse().join('');
+        default:
+            var error = 'Unimplemented integer type';
+            throw error;
+        }
+    }
 
+    this.__read_i8  = function (addr) {
+        return this.__integer(MLibelf.getValue(addr, 'i8'), 8);
+    }
+    this.__read_i16 = function (addr) {
+        return this.__integer(MLibelf.getValue(addr, 'i16'), 16);
+    }
+    this.__read_i32 = function (addr) {
+        return this.__integer(MLibelf.getValue(addr, 'i32'), 32);
+    }
+    this.__read_i64 = function (addr) {
+        return this.__integer([
+            MLibelf.getValue(addr+0, 'i32'),
+            MLibelf.getValue(addr+4, 'i32')], 32);
+    }
+    this.__read = function (addr, size) {
+        var array = new Uint8Array(size);
+        for (var i = 0; i < size; i++) {
+            array[i] = this.__read_i8(addr + i);
+        }
+        return array;
+    }
+
+    this.__stream_set = function (addr) {
+        this.__stream_addr = addr;
+    }
     this.__stream_read_i8 = function () {
         var value = this.__read_i8(this.__stream_addr);
         this.__stream_addr += 1;
@@ -49,21 +93,22 @@ var Elf = function (buffer) {
         this.__stream_addr += 8;
         return value;
     }
-
-    this.__stream_set = function (addr) {
-        this.__stream_addr = addr;
-    }
-    this.__read = function (addr, size) {
-        var array = new Uint8Array(size);
-        for (var i = 0; i < size; i++) {
-            array[i] = this.__read_i8(addr + i);
-        }
-        return array;
-    }
     this.__stream_read = function (size) {
         var value = this.__read(this.__stream_addr, size);
         this.__stream_addr += size;
         return value;
+    }
+
+    // Configuration
+    this.get_integer_type = function () {
+        if (this.integer_type == null) {
+            return ELF_INT_NUMBER;
+        }
+        return this.integer_type;
+    }
+
+    this.set_integer_type = function (type) {
+        this.integer_type = type;
     }
 
     // Methods
@@ -189,7 +234,7 @@ var Elf = function (buffer) {
         var ret = MLibelf.ccall('gelf_getrel', 'pointer',
             ['pointer', 'pointer'], [this.elf_ref, index, rel_addr]);
         if (ret != rel_addr) {
-            var error = 'Function gelf_getdyn failed';
+            var error = 'Function gelf_getrel failed';
             throw error;
         }
         this.__stream_set(rel_addr);
@@ -206,7 +251,7 @@ var Elf = function (buffer) {
         var ret = MLibelf.ccall('gelf_getrela', 'pointer',
             ['pointer', 'pointer'], [this.elf_ref, index, rela_addr]);
         if (ret != rela_addr) {
-            var error = 'Function gelf_getdyn failed';
+            var error = 'Function gelf_getrela failed';
             throw error;
         }
         this.__stream_set(rela_addr);
