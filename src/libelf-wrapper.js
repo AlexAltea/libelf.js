@@ -37,7 +37,6 @@ var Elf = function (buffer) {
         case ELF_INT_NUMBER:
             return value[0];
         case ELF_INT_STRING:
-            console.log(width);
             return value
                 .map(x => x.toString(16).toUpperCase())
                 .map(x => '0'.repeat(width/4 - x.length) + x)
@@ -133,12 +132,12 @@ var Elf = function (buffer) {
         return value;
     }
 
-    this.getdyn = function (index) {
+    this.getdyn = function (data_addr, index) {
         var dyn = {};
         var dyn_size = 0x10;
         var dyn_addr = MLibelf._malloc(dyn_size);
         var ret = MLibelf.ccall('gelf_getdyn', 'pointer',
-            ['pointer', 'pointer'], [this.elf_ref, index, 0]);
+            ['pointer', 'pointer'], [data_addr, index, dyn_addr]);
         if (ret != dyn_addr) {
             var error = 'Function gelf_getdyn failed';
             throw error;
@@ -148,6 +147,16 @@ var Elf = function (buffer) {
         dyn.d_val = this.__stream_read_i64();
         MLibelf._free(dyn_addr);
         return dyn;
+    }
+
+    this.getdata = function (scn_addr) {
+        var scn_data = MLibelf.ccall('elf_getdata', 'pointer',
+            ['pointer', 'pointer'], [scn_addr, 0]);
+        if (scn_data == 0) {
+            var error = 'Function elf_getdata failed';
+            throw error;
+        }
+        return scn_data;
     }
 
     this.getehdr = function () {
@@ -262,12 +271,22 @@ var Elf = function (buffer) {
         return rela;
     }
 
-    this.getshdr = function () {
+    this.getscn = function (index) {
+        var scn_addr = MLibelf.ccall('elf_getscn', 'pointer',
+            ['pointer', 'number'], [this.elf_ref, index]);
+        if (scn_addr == 0) {
+            var error = 'Function elf_getscn failed';
+            throw error;
+        }
+        return scn_addr;
+    }
+
+    this.getshdr = function (scn_addr) {
         var shdr = {};
         var shdr_size = 0x40;
         var shdr_addr = MLibelf._malloc(shdr_size);
         var ret = MLibelf.ccall('gelf_getshdr', 'pointer',
-            ['pointer', 'pointer'], [this.elf_ref, shdr_addr]);
+            ['pointer', 'pointer'], [scn_addr, shdr_addr]);
         if (ret != shdr_addr) {
             var error = 'Function gelf_getshdr failed';
             throw error;
@@ -284,7 +303,7 @@ var Elf = function (buffer) {
         shdr.sh_addralign  = this.__stream_read_i64();
         shdr.sh_entsize    = this.__stream_read_i64();
         MLibelf._free(shdr_addr);
-        return phdr;
+        return shdr;
     }
 
     this.getshdrnum = function () {
@@ -301,6 +320,22 @@ var Elf = function (buffer) {
         shdrnum = __read_i32(shdrnum_addr);
         MLibelf._free(shdrnum_addr);
         return shdrnum;
+    }
+
+    this.getshdrstrndx = function () {
+        var shdrstrndx = 0;
+        var shdrstrndx_size = 4;
+        var shdrstrndx_addr = MLibelf._malloc(shdrstrndx_size);
+        var ret = MLibelf.ccall('elf_getshstrndx', 'pointer',
+            ['pointer', 'pointer'], [this.elf_ref, shdrstrndx_addr]);
+        if (ret != 0) {
+            MLibelf._free(shdrstrndx_addr);
+            var error = 'Function elf_getshstrndx failed';
+            throw error;
+        }
+        shdrstrndx = __read_i32(shdrstrndx_addr);
+        MLibelf._free(shdrstrndx_addr);
+        return shdrstrndx;
     }
 
     this.getsym = function (index) {
@@ -328,5 +363,59 @@ var Elf = function (buffer) {
         MLibelf.ccall('elf_end', 'void',
             ['pointer'], [this.elf_ref]);
         MLibelf._free(this.elf_addr);
+    }
+
+    this.strptr = function (index, offset) {
+        var str = MLibelf.ccall('elf_strptr', 'string',
+            ['pointer', 'number', 'number'], [this.elf_ref, index, offset]);
+        return str;
+    }
+
+    // Shorthands
+    this.get_dynamic_entries = function () {
+        /* Locate dynamic section */
+        var addr = 0;
+        var scn_dynamic_addr = 0;
+        var scn_dynamic_data = 0;
+        var ehdr = this.getehdr();
+        for (var i = 1; i < ehdr.e_shnum; i++) {
+            var addr = MLibelf.ccall('elf_nextscn', 'pointer',
+                ['pointer', 'pointer'], [this.elf_ref, addr]);
+            if (addr == 0)
+                break;
+            var shdr = this.getshdr(addr);
+            var sh_name = this.strptr(ehdr.e_shstrndx, shdr.sh_name);
+            if (shdr.sh_type == SHT_STRTAB && sh_name == '.dynstr') {
+                scn_dynstr_index = i;
+            }
+            if (shdr.sh_type == SHT_DYNAMIC) {
+                scn_dynamic_addr = addr;
+                scn_dynamic_shdr = shdr;
+            }
+        }
+        if (scn_dynamic_addr != 0) {
+            scn_dynamic_data = this.getdata(scn_dynamic_addr);
+        } else {
+            return [];
+        }
+
+        /* Read dynamic entries */
+        var dents = [];
+        var count = scn_dynamic_shdr.sh_size / scn_dynamic_shdr.sh_entsize;
+        for (var i = 0; i < count; i++) {
+            dents.push(this.getdyn(scn_dynamic_data, i));
+        }
+
+        /* Comment dynamic entries */
+        var elf = this;
+        dents.forEach(function (dent) {
+            switch (dent.d_tag) {
+            case DT_NEEDED:
+                if (typeof scn_dynstr_index !== "undefined")
+                    dent.value = elf.strptr(scn_dynstr_index, dent.d_val);
+                break;
+            }
+        });
+        return dents;
     }
 }

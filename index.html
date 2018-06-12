@@ -126,6 +126,7 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                     elf = new Elf(buffer);
                     console.log(elf.kind());
                     console.log(elf.getehdr());
+                    console.log(elf.get_dynamic_entries());
                 })
             })
             // Highlight.JS

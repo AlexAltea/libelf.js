@@ -52,7 +52,7 @@ def compileLibelf():
         exports = map(lambda x: '_' + x, exports)
 
     # Get exported runtime methods
-    methods = ['ccall', 'writeArrayToMemory', 'getValue']
+    methods = ['ccall', 'writeArrayToMemory', 'getValue', 'Pointer_stringify']
 
     # Compile static library to JavaScript
     cmd = os.path.expandvars('$EMSCRIPTEN/emcc')
