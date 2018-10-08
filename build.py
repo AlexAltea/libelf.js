@@ -30,10 +30,10 @@ def compileLibelf():
 
     # Configuring libelf
     os.chdir(LIBELF_DIR)
-    os.system('export "libelf_cv_int64=long long"')
-    os.system('export "libelf_cv_int32=int"')
-    os.system('export "libelf_cv_int16=short"')
-    os.system('emconfigure ./configure --enable-elf64')
+    os.system('export "libelf_cv_int64=long long" && ' +
+              'export "libelf_cv_int32=int" && ' +
+              'export "libelf_cv_int16=short" && ' +
+              'emconfigure ./configure --enable-elf64')
 
     # MinGW (Windows) or Make (Linux/Unix)
     if os.name == 'nt':
