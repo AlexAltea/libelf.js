@@ -95,15 +95,9 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
 }</code></pre>
                     </p>
                 </div>
-                <div class="col-md-6" id="fileDropArea" style="height:100%;">
-                    <div id="fileDropBanner" style="background:#000; position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.0; z-index:999; text-align:center; pointer-events:none">
-                        <div style="color:#FFF; font-size: 30px;">
-                            <br> <br> <!-- WONTFIX: I know, I don't care. If it annoys you, submit a Pull Request. -->
-                            Drop files here!
-                        </div>
-                    </div>
+                <div class="col-md-6">
                     <h2>Demo</h2>
-                    <p>Because demos are worth a thousand words, feel free to load any ELF file to see Libelf.js in action. Everything will be processed locally.</p>
+                    <p>Demos are worth a thousand words: simply load any ELF file to see Libelf.js in action. Everything will be processed locally.</p>
                     <p>
                         <button type="button" id="fileSelectButton" class="btn btn-default btn-lg" onclick="uploadFile()">
                             <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
@@ -115,11 +109,6 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                     </p>
                     <div id="demo">
                         <div id="elftree" class="monospaced">
-                            <ul>
-                                <li>Root node 1
-                                    </ul>
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -144,61 +133,183 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
 
         <!-- LibelfJS -->
         <script src="dist/libelf.min.js"></script>
-        <script src="src/libelf-integers.js"></script>
 
         <script>
-            var elf;
-            // JSTree
-            $('#elftree').jstree({
-                "core": {
-                    "themes": {
-                        "icons": false
-                    }
-                }
-            });
-            // Libelf
-            fetch('tests/test1.elf').then((response) => {
-                response.arrayBuffer().then((buffer) => {
-                    elf = new Elf(buffer);
-                    console.log(elf.kind());
-                    console.log(elf.getehdr());
-                    console.log(elf.get_dynamic_entries());
-                })
-            })
             // Highlight.JS
             hljs.initHighlightingOnLoad();
+
+            // JSTree
+            function formatTreeEntry(name, data, extra) {
+                const paddingName = 16;
+                const paddingData = 20;
+                var result = "";
+                result += `<i>${name}</i>:` + '&nbsp;'.repeat(paddingName - name.toString().length);
+                result += `<b>${data}</b> ` + '&nbsp;'.repeat(paddingData - data.toString().length);
+                if (extra != null)
+                    result += `(${extra})`;
+                return result;
+            }
+
+            function formatTreeNode(name, length) {
+                var result = "";
+                result += `<b>${name}</b> `;
+                if (length != null)
+                    result += `<i>[${length}]</i>`;
+                return result;
+            }
+
+            $('#elftree').jstree({
+                'core': {
+                    'themes': {
+                        'icons': false
+                    },
+                    'data': [{
+                        'text': formatTreeNode('ELF'),
+                        'state' : { 'opened' : true },
+                        'children': [{
+                            'text': formatTreeNode('Header'),
+                            'state' : { 'opened' : true },
+                            'children': [
+                                { 'text': formatTreeEntry('e_type',      '???') },
+                                { 'text': formatTreeEntry('e_machine',   '???') },
+                                { 'text': formatTreeEntry('e_version',   '???') },
+                                { 'text': formatTreeEntry('e_entry',     '???') },
+                                { 'text': formatTreeEntry('e_phoff',     '???') },
+                                { 'text': formatTreeEntry('e_shoff',     '???') },
+                                { 'text': formatTreeEntry('e_flags',     '???') },
+                                { 'text': formatTreeEntry('e_ehsize',    '???') },
+                                { 'text': formatTreeEntry('e_phentsize', '???') },
+                                { 'text': formatTreeEntry('e_phnum',     '???') },
+                                { 'text': formatTreeEntry('e_shentsize', '???') },
+                                { 'text': formatTreeEntry('e_shnum',     '???') },
+                                { 'text': formatTreeEntry('e_shstrndx',  '???') },
+                            ]
+                        }, {
+                            'text': formatTreeNode('Segments', 0),
+                        }, {
+                            'text': formatTreeNode('Sections', 0),
+                        }]
+                    }]
+                }
+            });
 
             // File upload
             $('#fileSelectInput').change(uploadFile);
             $('#fileSelectButton').click(function () {
                 $('#fileSelectInput').click();
             });
-            $('#fileDropArea').on('drop', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadFile(e);
-            });
-            $('#fileDropArea').on('dragover', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $('#fileDropBanner').animate({
-                    opacity: 0.5
-                });
-                setTimeout(function () {
-                    $('#fileDropBanner').animate({
-                        opacity: 0.0
-                    });
-                }, 1000);
-            });
-            $('#fileDropArea').on('dragleave', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $('#fileDropBanner').animate({
-                    opacity: 0.0
-                });
-            });
 
             function uploadFile(e) {
+            }
+
+            // Libelf
+            var elf;
+            fetch('tests/test1.elf').then((response) => {
+                response.arrayBuffer().then((buffer) => {
+                    elf = new Elf(buffer);
+                    console.log(elf.kind());
+                    console.log(elf.getehdr());
+                    console.log(elf.get_dynamic_entries());
+                    updateTree(elf);
+                })
+            })
+
+            // ELF tree
+            function genExtraFlags(value, strings) {
+                var result = [];
+                for (var i = 0; i < 32; i++) {
+                    let flag = (1 << i);
+                    if (value & flag)
+                        result.push(strings[flag])
+                }
+                if (result.length)
+                    return result.join(' | ')
+                else
+                    return '<i>none</i>';
+            }
+
+            function genTreePhdr(elf, index) {
+                var phdr = elf.getphdr(index);
+                return {
+                    'text': `PHDR[${index}]`,
+                    'children': [
+                        { 'text': formatTreeEntry('p_type',    phdr.p_type.num(),    p_type_strings[phdr.p_type.num()]) },
+                        { 'text': formatTreeEntry('p_flags',   phdr.p_flags.hex(),   genExtraFlags(phdr.p_flags, p_flags_strings)) },
+                        { 'text': formatTreeEntry('p_offset',  phdr.p_offset.hex()) },
+                        { 'text': formatTreeEntry('p_vaddr',   phdr.p_vaddr.hex()) },
+                        { 'text': formatTreeEntry('p_paddr',   phdr.p_paddr.hex()) },
+                        { 'text': formatTreeEntry('p_filesz',  phdr.p_filesz.num()) },
+                        { 'text': formatTreeEntry('p_memsz',   phdr.p_memsz.num()) },
+                        { 'text': formatTreeEntry('p_align',   phdr.p_align.num()) },
+                    ]
+                };
+            }
+
+            function genTreeShdr(elf, index) {
+                var shdr = elf.getshdr(elf.getscn(index));
+                return {
+                    'text': `SHDR[${index}]`,
+                    'state' : { 'opened' : true },
+                    'children': [
+                        { 'text': formatTreeEntry('sh_name',      shdr.sh_name.num()) },
+                        { 'text': formatTreeEntry('sh_type',      shdr.sh_type.num(),   sh_type_strings[shdr.sh_type.num()]) },
+                        { 'text': formatTreeEntry('sh_flags',     shdr.sh_flags.hex()) },
+                        { 'text': formatTreeEntry('sh_addr',      shdr.sh_addr.hex()) },
+                        { 'text': formatTreeEntry('sh_offset',    shdr.sh_offset.hex()) },
+                        { 'text': formatTreeEntry('sh_size',      shdr.sh_size.num()) },
+                        { 'text': formatTreeEntry('sh_link',      shdr.sh_link.num()) },
+                        { 'text': formatTreeEntry('sh_info',      shdr.sh_info.num()) },
+                        { 'text': formatTreeEntry('sh_addralign', shdr.sh_addralign.num()) },
+                        { 'text': formatTreeEntry('sh_entsize',   shdr.sh_entsize.num()) },
+                    ]
+                };
+            }
+
+            function genTreeElf(elf) {
+                var ehdr = elf.getehdr();
+                var phdrs = [];
+                var shdrs = [];
+                for (var i = 0; i < ehdr.e_phnum; i++) {
+                    phdrs.push(genTreePhdr(elf, i));
+                }
+                for (var i = 0; i < ehdr.e_shnum; i++) {
+                    shdrs.push(genTreeShdr(elf, i));
+                }
+                return {
+                    'text': formatTreeNode('ELF'),
+                    'state' : { 'opened' : true },
+                    'children': [{
+                        'text': formatTreeNode('Header'),
+                        'state' : { 'opened' : true },
+                        'children': [
+                            { 'text': formatTreeEntry('e_type',      ehdr.e_type.num(),    e_type_strings[ehdr.e_type.num()]) },
+                            { 'text': formatTreeEntry('e_machine',   ehdr.e_machine.num(), e_machine_strings[ehdr.e_machine.num()]) },
+                            { 'text': formatTreeEntry('e_version',   ehdr.e_version.num(), e_version_strings[ehdr.e_version.num()]) },
+                            { 'text': formatTreeEntry('e_entry',     ehdr.e_entry.hex()) },
+                            { 'text': formatTreeEntry('e_phoff',     ehdr.e_phoff.hex()) },
+                            { 'text': formatTreeEntry('e_shoff',     ehdr.e_shoff.hex()) },
+                            { 'text': formatTreeEntry('e_flags',     ehdr.e_flags.hex()) },
+                            { 'text': formatTreeEntry('e_ehsize',    ehdr.e_ehsize.num()) },
+                            { 'text': formatTreeEntry('e_phentsize', ehdr.e_phentsize.num()) },
+                            { 'text': formatTreeEntry('e_phnum',     ehdr.e_phnum.num()) },
+                            { 'text': formatTreeEntry('e_shentsize', ehdr.e_shentsize.num()) },
+                            { 'text': formatTreeEntry('e_shnum',     ehdr.e_shnum.num()) },
+                            { 'text': formatTreeEntry('e_shstrndx',  ehdr.e_shstrndx.num()) },
+                        ]
+                    }, {
+                        'text': formatTreeNode('Segments', ehdr.e_phnum.num()),
+                        'children': phdrs,
+                    }, {
+                        'text': formatTreeNode('Sections', ehdr.e_shnum.num()),
+                        'state' : { 'opened' : true },
+                        'children': shdrs,
+                    }]
+                };
+            }
+
+            function updateTree(elf) {
+                $('#elftree').jstree(true).settings.core.data = genTreeElf(elf);
+                $('#elftree').jstree(true).refresh();
             }
         </script>
     </body>

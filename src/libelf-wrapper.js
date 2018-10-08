@@ -178,9 +178,9 @@ var Elf = function (buffer) {
             throw error;
         }
         this.__stream_set(ehdr_addr);
-        ehdr.e_type       = this.__stream_read(EI_NIDENT);
+        ehdr.e_indent     = this.__stream_read(EI_NIDENT);
         ehdr.e_type       = this.__stream_read_i16();
-        ehdr.e_indent     = this.__stream_read_i16();
+        ehdr.e_machine    = this.__stream_read_i16();
         ehdr.e_version    = this.__stream_read_i32();
         ehdr.e_entry      = this.__stream_read_i64();
         ehdr.e_phoff      = this.__stream_read_i64();

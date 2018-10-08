@@ -121,6 +121,15 @@ var ElfUInt = function (width) {
             }
             return string;
         }
+        this.num = function () {
+            var number = 0;
+            for (var i = this.chunks.length - 1; i >= 0; i--)
+                number = (number * 0x10000) + this.chunks[i];
+            return number;
+        }
+
+        // Overrides
+        this.valueOf = this.num;
     };
 };
 
