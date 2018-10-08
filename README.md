@@ -22,9 +22,18 @@ if (elf.kind() != "elf") {
 }
 
 var ehdr = elf.getehdr();
-for (var i = 0; i < ehdr.phnum; i++) {
+
+// Handle segments
+for (var i = 0; i &lt; ehdr.phnum; i++) {
     var phdr = elf.getphdr(i);
 }
+// Handle sections
+for (var i = 0; i &lt; ehdr.shnum; i++) {
+    var scn = elf.getscn(i);
+    var shdr = elf.getshdr(scn);
+    var name = elf.strptr(
+        ehdr.e_shstrndx.num(),
+        shdr.sh_name.num());
 ```
 
 ## Building

@@ -90,8 +90,18 @@ if (elf.kind() != "elf") {
 }
 
 var ehdr = elf.getehdr();
+
+// Handle segments
 for (var i = 0; i &lt; ehdr.phnum; i++) {
     var phdr = elf.getphdr(i);
+}
+// Handle sections
+for (var i = 0; i &lt; ehdr.shnum; i++) {
+    var scn = elf.getscn(i);
+    var shdr = elf.getshdr(scn);
+    var name = elf.strptr(
+        ehdr.e_shstrndx.num(),
+        shdr.sh_name.num());
 }</code></pre>
                     </p>
                 </div>
@@ -103,7 +113,7 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                             <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
                             Upload...
                         </button>
-                        <div style="height:0px;overflow:hidden">
+                        <div style="height:0px; overflow:hidden">
                             <input type="file" id="fileSelectInput" />
                         </div>
                     </p>
@@ -146,7 +156,7 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                 result += `<i>${name}</i>:` + '&nbsp;'.repeat(paddingName - name.toString().length);
                 result += `<b>${data}</b> ` + '&nbsp;'.repeat(paddingData - data.toString().length);
                 if (extra != null)
-                    result += `(${extra})`;
+                    result += `<span style="color:#888">= ${extra}</span>`;
                 return result;
             }
 
@@ -200,19 +210,27 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
             });
 
             function uploadFile(e) {
-            }
+                if (e == null)
+                    return;
 
-            // Libelf
-            var elf;
-            fetch('tests/test1.elf').then((response) => {
-                response.arrayBuffer().then((buffer) => {
-                    elf = new Elf(buffer);
-                    console.log(elf.kind());
-                    console.log(elf.getehdr());
-                    console.log(elf.get_dynamic_entries());
-                    updateTree(elf);
-                })
-            })
+                // Obtain file
+                if (typeof e.target !== 'undefined' && typeof e.target.files !== 'undefined') {
+                    var file = e.target.files[0];
+                } else if (typeof e.dataTransfer !== 'undefined') {
+                    var file = e.dataTransfer.files[0];
+                } else {
+                    var file = e.originalEvent.dataTransfer.files[0];
+                }
+                let name = file.name;
+
+                reader = new FileReader();
+                reader.onloadend = function (e) {
+                    var data = e.target.result;
+                    var elf = new Elf(data);
+                    updateTree(elf, name);
+                };
+                reader.readAsArrayBuffer(file);
+            }
 
             // ELF tree
             function genExtraFlags(value, strings) {
@@ -230,8 +248,15 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
 
             function genTreePhdr(elf, index) {
                 var phdr = elf.getphdr(index);
+                var type = p_type_strings[phdr.p_type.num()]
+                var node = `PHDR[<b>${index}</b>]`
+                if (type) {
+                    node += '<span style="color:#888">'
+                    node += '&nbsp'.repeat(4 - index.toString().length) + `(${type})`;
+                    node += '</span>'
+                }
                 return {
-                    'text': `PHDR[${index}]`,
+                    'text': node,
                     'children': [
                         { 'text': formatTreeEntry('p_type',    phdr.p_type.num(),    p_type_strings[phdr.p_type.num()]) },
                         { 'text': formatTreeEntry('p_flags',   phdr.p_flags.hex(),   genExtraFlags(phdr.p_flags, p_flags_strings)) },
@@ -246,14 +271,21 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
             }
 
             function genTreeShdr(elf, index) {
+                var ehdr = elf.getehdr();
                 var shdr = elf.getshdr(elf.getscn(index));
+                var name = elf.strptr(ehdr.e_shstrndx.num(), shdr.sh_name.num());
+                var node = `SHDR[<b>${index}</b>]`
+                if (name) {
+                    node += '<span style="color:#888">'
+                    node += '&nbsp'.repeat(4 - index.toString().length) + `(${name})`;
+                    node += '</span>'
+                }
                 return {
-                    'text': `SHDR[${index}]`,
-                    'state' : { 'opened' : true },
+                    'text': node,
                     'children': [
-                        { 'text': formatTreeEntry('sh_name',      shdr.sh_name.num()) },
+                        { 'text': formatTreeEntry('sh_name',      shdr.sh_name.num(),   `"${name}"`) },
                         { 'text': formatTreeEntry('sh_type',      shdr.sh_type.num(),   sh_type_strings[shdr.sh_type.num()]) },
-                        { 'text': formatTreeEntry('sh_flags',     shdr.sh_flags.hex()) },
+                        { 'text': formatTreeEntry('sh_flags',     shdr.sh_flags.hex(),  genExtraFlags(shdr.sh_flags, sh_flags_strings)) },
                         { 'text': formatTreeEntry('sh_addr',      shdr.sh_addr.hex()) },
                         { 'text': formatTreeEntry('sh_offset',    shdr.sh_offset.hex()) },
                         { 'text': formatTreeEntry('sh_size',      shdr.sh_size.num()) },
@@ -265,7 +297,7 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                 };
             }
 
-            function genTreeElf(elf) {
+            function genTreeElf(elf, name) {
                 var ehdr = elf.getehdr();
                 var phdrs = [];
                 var shdrs = [];
@@ -276,7 +308,7 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                     shdrs.push(genTreeShdr(elf, i));
                 }
                 return {
-                    'text': formatTreeNode('ELF'),
+                    'text': formatTreeNode(`ELF <span style="color:#888">(${name})</span>`),
                     'state' : { 'opened' : true },
                     'children': [{
                         'text': formatTreeNode('Header'),
@@ -301,14 +333,13 @@ for (var i = 0; i &lt; ehdr.phnum; i++) {
                         'children': phdrs,
                     }, {
                         'text': formatTreeNode('Sections', ehdr.e_shnum.num()),
-                        'state' : { 'opened' : true },
                         'children': shdrs,
                     }]
                 };
             }
 
-            function updateTree(elf) {
-                $('#elftree').jstree(true).settings.core.data = genTreeElf(elf);
+            function updateTree(elf, name) {
+                $('#elftree').jstree(true).settings.core.data = genTreeElf(elf, name);
                 $('#elftree').jstree(true).refresh();
             }
         </script>

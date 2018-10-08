@@ -208,6 +208,13 @@ SHT_HIPROC          = 0x7fffffff;
 SHT_LOUSER          = 0x80000000;
 SHT_HIUSER          = 0xffffffff;
 
+// sh_flags
+SHF_WRITE           = 0x1;
+SHF_ALLOC           = 0x2;
+SHF_EXECINSTR       = 0x4;
+SHF_MASKOS          = 0x0f000000;
+SHF_MASKPROC        = 0xf0000000;
+
 // Dynamic array tags
 DT_NULL             = 0;
 DT_NEEDED           = 1;

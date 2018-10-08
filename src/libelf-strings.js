@@ -160,6 +160,13 @@ const sh_type_strings = {
     19:    "SHT_NUM",
 };
 
+// sh_flags
+const sh_flags_strings = {
+    0x1:   "SHF_WRITE",
+    0x2:   "SHF_ALLOC",
+    0x4:   "SHF_EXECINSTR",
+};
+
 // dt_type
 const dt_type_strings = {
     0:     "DT_NULL",
