@@ -18,8 +18,10 @@ module.exports = function (grunt) {
             dist: {
                 src: [
                     'src/libelf.out.js',
+                    'src/libelf-constants.js',
+                    'src/libelf-strings.js',
+                    'src/libelf-integers.js',
                     'src/libelf-wrapper.js',
-                    'src/libelf-constants.js'
                 ],
                 dest: 'dist/libelf.min.js'
             }
