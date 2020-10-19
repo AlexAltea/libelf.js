@@ -16,10 +16,14 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-exec": "~0.4.6",
     "load-grunt-tasks": "^1.0.0",
+    "mocha": "^8.2.0",
     "time-grunt": "^1.0.0"
   },
   "bugs": {
     "url": "https://github.com/AlexAltea/libelf.js/issues"
+  },
+  "scripts": {
+    "test": "mocha"
   },
   "private": true
 }
