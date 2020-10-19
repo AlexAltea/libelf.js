@@ -41,9 +41,9 @@ var ElfUInt = function (width) {
             if (typeof value === 'object' && Array.isArray(value)) {
                 for (var i = 0; i < this.chunks.length; i++) {
                     if (i % 2 == 0)
-                        this.chunks[i] = (value[i/2] >>>  0) & 0xFFFF;
+                        this.chunks[i] = (value[(i/2)|0] >>>  0) & 0xFFFF;
                     else
-                        this.chunks[i] = (value[i/2] >>> 16) & 0xFFFF;
+                        this.chunks[i] = (value[(i/2)|0] >>> 16) & 0xFFFF;
                 }
             }
             // Initialize from ElfUInt
