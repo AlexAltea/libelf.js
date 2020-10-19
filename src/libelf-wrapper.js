@@ -67,7 +67,7 @@ var Elf = function (buffer) {
     this.__read_i64 = function (addr) {
         return this.__integer([
             MLibelf.getValue(addr+0, 'i32'),
-            MLibelf.getValue(addr+4, 'i32')], 32);
+            MLibelf.getValue(addr+4, 'i32')], 64);
     }
     this.__read = function (addr, size) {
         var array = new Uint8Array(size);
