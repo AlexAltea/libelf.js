@@ -39,7 +39,7 @@ def compileLibelf():
     if os.name == 'nt':
         os.system('mingw32-make')
     if os.name == 'posix':
-        os.system('make')
+        os.system('emmake make')
     os.chdir('..')
 
     # Get exported functions
@@ -50,18 +50,24 @@ def compileLibelf():
         exports = exports.replace('\r\n','\n')
         exports = exports.strip().split('\n\t')
         exports = map(lambda x: '_' + x, exports)
+    exports = list(exports)
+    exports.append("_free")
 
     # Get exported runtime methods
-    methods = ['ccall', 'writeArrayToMemory', 'getValue', 'Pointer_stringify']
+    methods = ['_free', '_malloc', 'ccall', 'writeArrayToMemory', 'getValue', 'Pointer_stringify']
 
     # Compile static library to JavaScript
-    cmd = os.path.expandvars('$EMSCRIPTEN/emcc')
+    cmd = os.path.expandvars('emcc')
     cmd += ' -Os --memory-init-file 0'
     cmd += ' libelf/lib/libelf.a'
     cmd += ' -s EXPORT_NAME="\'MLibelf\'"'
     cmd += ' -s EXPORTED_FUNCTIONS=\"[\''+ '\', \''.join(exports) +'\']\"'
-    cmd += ' -s EXTRA_EXPORTED_RUNTIME_METHODS=\"[\''+ '\', \''.join(methods) +'\']\"'
+    cmd += ' -s EXPORTED_RUNTIME_METHODS=\"[\''+ '\', \''.join(methods) +'\']\"'
+    cmd += ' -s RESERVED_FUNCTION_POINTERS=256'
+    cmd += ' -s ALLOW_MEMORY_GROWTH=1'
     cmd += ' -s MODULARIZE=1'
+    cmd += ' -s WASM_ASYNC_COMPILATION=0'
+    cmd += ' -s ENVIRONMENT="web"'
     cmd += ' -s WASM=0'
     cmd += ' -o src/libelf.out.js'
     os.system(cmd)
@@ -71,5 +77,5 @@ if __name__ == "__main__":
     if os.name in ['nt', 'posix']:
         compileLibelf()
     else:
-        print "Your operating system is not supported by this script:"
-        print "Please, use Emscripten to compile libelf manually to src/libelf.out.js"
+        print("Your operating system is not supported by this script:")
+        print("Please, use Emscripten to compile libelf manually to src/libelf.out.js")
