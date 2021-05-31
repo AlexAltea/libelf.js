@@ -39,8 +39,10 @@ for (var i = 0; i &lt; ehdr.shnum; i++) {
 ## Building
 To build the Libelf.js library, clone the *master* branch of this repository, and do the following:
 
-1. Install the latest [Python 2.x (64-bit)](https://www.python.org/downloads/), [CMake](http://www.cmake.org/download/) and the [Emscripten SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html). Follow the respective instructions and make sure all environment variables are configured correctly. Under Windows [MinGW](http://www.mingw.org/) (specifically *mingw32-make*) is required.
+1. Install the latest [Python 3.8+](https://www.python.org/downloads/), [CMake](http://www.cmake.org/download/) and the [Emscripten SDK 2.0.21+](https://emscripten.org/docs/getting_started/downloads.html). Follow the respective instructions and make sure all environment variables are configured correctly. Under Windows [MinGW](http://www.mingw.org/) (specifically *mingw32-make*) is required.
 
-2. Install the development dependencies with: `npm install`.
+2. Install the development dependencies with: `npm install --also=dev`.
 
-3. Finally, build the source with: `grunt build`.
+3. Install grunt with: `npm install -g grunt`
+
+4. Finally, build the source with: `grunt build`.

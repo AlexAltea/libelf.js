@@ -11,7 +11,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         exec: {
             emscripten: {
-                cmd: 'python build.py'
+                cmd: 'python3 build.py'
             }
         },
         concat: {
